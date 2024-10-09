@@ -202,6 +202,8 @@ async def join_group(ctx, group: str):
             await ctx.author.add_roles(role)
             log_message = f"{ctx.author.mention}, you have been added to the '{group}' group."
             await send_logs(log_message, REPLYING_CHANNEL_ID)
+            log_buffer = f"Log\nCategory: Role Management\nReason: Assigned {role.name} to {ctx.author.display_name}"
+            await send_logs(log_buffer, LOGGING_CHANNEL_ID)
         except discord.Forbidden:
             error_message = f"{ctx.author.mention}, I do not have permission to add roles."
             await send_logs(error_message, LOGGING_CHANNEL_ID)
@@ -210,8 +212,7 @@ async def join_group(ctx, group: str):
             await send_logs(error_message, LOGGING_CHANNEL_ID)
             print(e)
 
-    log_buffer = f"Log\nCategory: Role Management\nReason: Assigned {role.name} to {ctx.author.display_name}"
-    await send_logs(log_buffer, LOGGING_CHANNEL_ID)
+
 
 
 
