@@ -23,7 +23,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 #
 LOGGING_CHANNEL_ID = 1234 # Channel ID for logging messages
 REPLYING_CHANNEL_ID = 1234 # Channel ID for replying to commands
-COMMANDS_CHANNEL_ID = 1234 # Channel ID for bot commands
+COMMANDS_CHANNEL_ID = 1234
 
 async def send_logs(buffer, channel_id):
     # Get the channel object by its ID
@@ -50,7 +50,7 @@ async def send_logs(buffer, channel_id):
 #   ==================================================
 #
 
-FORM_CHANNEL = 1234 # Channel ID for the form submission
+FORM_CHANNEL = 1234
 
 @bot.event
 async def on_message(message):
@@ -92,7 +92,6 @@ async def on_message(message):
 
 
 MEMBER_MESSAGE_ID = 1234  
-VOLUNTEER_MESSAGE_ID = 1234 # Maybe Depricated
 SCIENTIFIC_MESSAGE_ID = 1234
 
 @bot.event
@@ -163,7 +162,7 @@ async def on_ready():
 bot.remove_command('ping')
 bot.remove_command('help')
 
-@bot.command(name='onlyusedbytransistors_itshided')
+@bot.command(name='dispmessage')
 async def help_command(ctx):
     help_message = """
 🔸**Welcome to the ByteMeACM channel**🔸
@@ -172,15 +171,71 @@ A reply message will be sent to you when you use a command in channel <#12935210
 
 🔸**Bot Commands:**🔸
 🔹!join {group} - Join a scientific group.
+🔹!volunteerjoin {volunteer_group} - Join Volunteer Groups. Note that you must be a volunteer to use this command.
 
 🔸**Available Scientific Groups:**🔸
 • `!join AI` - Join Artificial Intelligence Group.
 • `!join Hardweras` - Join Hardware Group.
 • `!join Cybersecurity` - Join Cybersecurity Group.
 
+🔸**Available Volunteer Groups:**🔸
+• `!volunteerjoin Graphics` - Join Graphics Group.
+• `!volunteerjoin "Social Media"` - Join Social Media Group.
+• `!volunteerjoin Web` - Join Web Development Group.
+• `!volunteerjoin Workshops` - Join Workshop Planning Group.
+Note for volunteers: If a group name has a space, you must use quotes ("") around the group name.
+
 ❗️Please do not spam commands.❗️
 """
-    await ctx.send(help_message)
+    # check if user is in Transistors role
+    transistor_role = discord.utils.get(ctx.guild.roles, name="Transistors")
+    if transistor_role in ctx.author.roles:
+        await ctx.send(help_message)
+
+
+@bot.command(name='volunteerjoin')
+async def join_volunteer(ctx, group: str):
+    # Check if the user is already a volunteer
+    volunteer_role = discord.utils.get(ctx.guild.roles, name="Volunteers")
+
+    # Check if the user is a volunteer
+    if volunteer_role not in ctx.author.roles:
+        error_message = f"{ctx.author.mention}, you must be a volunteer to use this command."
+        await send_logs(error_message, REPLYING_CHANNEL_ID)
+        return
+
+    # Find the role based on the group name
+    role = discord.utils.get(ctx.guild.roles, name=group)
+
+    if role is None:
+        error_message = f"{ctx.author.mention}, the {group} role does not exist."
+        await send_logs(error_message, REPLYING_CHANNEL_ID)
+        return
+
+    # Check if the user already has the role
+    if role in ctx.author.roles:
+        log_message = f"{ctx.author.mention}, you already have the {group} role."
+        await send_logs(log_message, REPLYING_CHANNEL_ID)
+    else:
+        try:
+            # Add the role to the user
+            await ctx.author.add_roles(role)
+            log_message = f"{ctx.author.mention}, you have been added to the {group} Volunteer group."
+            await send_logs(log_message, REPLYING_CHANNEL_ID)
+
+            # Log the role assignment
+            log_buffer = f"Log\nCategory: Role Management\nReason: Assigned {role.name} to {ctx.author.display_name}"
+            await send_logs(log_buffer, LOGGING_CHANNEL_ID)
+        # Expecting a Forbidden exception if the bot does not have permission to add roles
+        except discord.Forbidden:
+            error_message = f"{ctx.author.mention}, I do not have permission to add roles."
+            await send_logs(error_message, LOGGING_CHANNEL_ID)
+
+        # Expecting an HTTPException if there is an error while adding the role    
+        except discord.HTTPException as e:
+            error_message = f"{ctx.author.mention}, an error occurred while adding the role."
+            await send_logs(error_message, LOGGING_CHANNEL_ID)
+            print(e)
 
 @bot.command(name='join')
 async def join_group(ctx, group: str):
@@ -188,6 +243,7 @@ async def join_group(ctx, group: str):
     role = discord.utils.get(ctx.guild.roles, name=group)
 
     if role is None:
+        # Send an error message if the role does not exist
         error_message = f"{ctx.author.mention}, the '{group}' role does not exist."
         await send_logs(error_message, REPLYING_CHANNEL_ID)
         return
@@ -202,22 +258,24 @@ async def join_group(ctx, group: str):
             await ctx.author.add_roles(role)
             log_message = f"{ctx.author.mention}, you have been added to the '{group}' group."
             await send_logs(log_message, REPLYING_CHANNEL_ID)
+
+            # Log the role assignment
             log_buffer = f"Log\nCategory: Role Management\nReason: Assigned {role.name} to {ctx.author.display_name}"
             await send_logs(log_buffer, LOGGING_CHANNEL_ID)
+      
+        # Expecting a Forbidden exception if the bot does not have permission to add roles
         except discord.Forbidden:
             error_message = f"{ctx.author.mention}, I do not have permission to add roles."
             await send_logs(error_message, LOGGING_CHANNEL_ID)
+            
+        # Expecting an HTTPException if there is an error while adding the role
         except discord.HTTPException as e:
             error_message = f"{ctx.author.mention}, an error occurred while adding the role. Line: 225"
             await send_logs(error_message, LOGGING_CHANNEL_ID)
             print(e)
 
-
-
-
-
-
-bot.run('ByteMeACM_TOKEN')
+# run the bot
+bot.run('BytemeACM_Bot_Token')
 
 
 
