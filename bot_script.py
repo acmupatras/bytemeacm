@@ -262,16 +262,17 @@ async def join_group(ctx, group: str):
             # Log the role assignment
             log_buffer = f"Log\nCategory: Role Management\nReason: Assigned {role.name} to {ctx.author.display_name}"
             await send_logs(log_buffer, LOGGING_CHANNEL_ID)
+      
         # Expecting a Forbidden exception if the bot does not have permission to add roles
         except discord.Forbidden:
             error_message = f"{ctx.author.mention}, I do not have permission to add roles."
             await send_logs(error_message, LOGGING_CHANNEL_ID)
+            
         # Expecting an HTTPException if there is an error while adding the role
         except discord.HTTPException as e:
             error_message = f"{ctx.author.mention}, an error occurred while adding the role. Line: 225"
             await send_logs(error_message, LOGGING_CHANNEL_ID)
             print(e)
-
 
 # run the bot
 bot.run('BytemeACM_Bot_Token')
